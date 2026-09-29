@@ -1,0 +1,69 @@
+"""Part I.2 - Basic data preprocessing for the US Accidents dataset.
+
+Streams the raw 3 GB CSV in chunks (so it never has to fit in RAM) and:
+  1. keeps only rows with AT MOST ONE missing value (counted over all 46 original columns),
+  2. drops attributes that cannot contribute to any later part of the project.
+
+Output: US_Accidents_filtered.csv (input for Parts II-V).
+Usage:  python preprocess.py [path/to/US_Accidents_March23.csv]
+"""
+import sys
+
+import pandas as pd
+
+RAW_CSV = sys.argv[1] if len(sys.argv) > 1 else "US_Accidents_March23.csv"
+OUT_CSV = "US_Accidents_filtered.csv"
+CHUNK_ROWS = 500_000
+MAX_MISSING = 1
+
+# Attributes removed after the row filter (rationale in report.md).
+DROP_COLS = [
+    "ID",                 # row identifier
+    "Source",             # data-provider tag, not a property of the accident
+    "Description",        # free text, unique per row
+    "Country",            # constant ("US")
+    "Airport_Code",       # id of the nearest weather station
+    "Weather_Timestamp",  # time of the weather observation, not of the accident
+    "Zipcode",            # very high cardinality; redundant with State/City/County/Lat/Lng
+    "End_Lat",            # redundant with Start_Lat/Start_Lng + Distance(mi)
+    "End_Lng",
+    "Turning_Loop",       # constant (False in every kept row)
+]
+
+
+def main():
+    total_in = 0
+    total_out = 0
+    missing_hist = {}            # missing-value count -> number of rows (raw data)
+    missing_kept = None          # per-column missing counts among kept rows
+    country_values = set()
+    first = True
+
+    for chunk in pd.read_csv(RAW_CSV, chunksize=CHUNK_ROWS):
+        n_missing = chunk.isna().sum(axis=1)
+        for k, v in n_missing.value_counts().items():
+            missing_hist[k] = missing_hist.get(k, 0) + v
+        country_values.update(chunk["Country"].dropna().unique())
+
+        kept = chunk[n_missing <= MAX_MISSING].drop(columns=DROP_COLS)
+        col_missing = kept.isna().sum()
+        missing_kept = col_missing if missing_kept is None else missing_kept + col_missing
+
+        kept.to_csv(OUT_CSV, mode="w" if first else "a", header=first, index=False)
+        first = False
+
+        total_in += len(chunk)
+        total_out += len(kept)
+        print(f"read {total_in:>9,} rows, kept {total_out:>9,}", flush=True)
+
+    print("\nRows per number of missing values (raw data, first 3):")
+    for k in sorted(missing_hist)[:3]:
+        print(f"  {k} missing: {missing_hist[k]:,}")
+    print(f"\nCountry values in raw data: {country_values}")
+    print(f"Rows kept: {total_out:,} of {total_in:,}")
+    print("\nMissing values per remaining column (kept rows):")
+    print(missing_kept[missing_kept > 0].to_string())
+
+
+if __name__ == "__main__":
+    main()
