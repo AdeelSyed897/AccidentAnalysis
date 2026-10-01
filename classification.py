@@ -11,44 +11,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import KFold
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
+from preprocess import process_time, process_weather
 
-
-def process_weather(df):
-    weather = df["Weather_Condition"].fillna("Unknown").str.lower()
-
-    df["weather_rain"] = weather.str.contains(
-        "rain|drizzle|shower", regex=True
-    ).astype(int)
-    df["weather_snow"] = weather.str.contains("snow", regex=True).astype(int)
-    df["weather_fog"] = weather.str.contains("fog|mist", regex=True).astype(int)
-    df["weather_thunderstorm"] = weather.str.contains(
-        "thunder|t-storm", regex=True
-    ).astype(int)
-    df["weather_wind"] = weather.str.contains("windy", regex=True).astype(int)
-    df["weather_hail"] = weather.str.contains("hail", regex=True).astype(int)
-    df["weather_freezing"] = weather.str.contains(
-        "freezing|ice pellets|sleet|wintry mix", regex=True
-    ).astype(int)
-    df["weather_haze"] = weather.str.contains(
-        "haze|smoke|dust", regex=True
-    ).astype(int)
-    df["weather_clear"] = weather.str.contains(
-        "fair|clear", regex=True
-    ).astype(int)
-
-    return df
-
-
-def process_time(df):
-    start_dt = pd.to_datetime(df["Start_Time"], format="mixed")
-
-    df["start_hour"] = start_dt.dt.hour
-    df["start_dayofweek"] = start_dt.dt.dayofweek
-    df["start_month"] = start_dt.dt.month
-    df["start_year"] = start_dt.dt.year
-
-    # REMOVED: duration_minutes (End_Time - Start_Time) causes target leakage
-    return df
 
 
 def prepare_dataset(filepath):
@@ -72,17 +36,6 @@ def prepare_dataset(filepath):
         "Wind_Direction",
     ]
     df = df.drop(columns=[c for c in drop_cols if c in df.columns])
-
-    # Convert twilight boolean columns cleanly
-    twilight_cols = [
-        "Sunrise_Sunset",
-        "Civil_Twilight",
-        "Nautical_Twilight",
-        "Astronomical_Twilight",
-    ]
-    for col in twilight_cols:
-        if col in df.columns:
-            df[col] = (df[col] == "Day").astype(int)
 
     return df
 
@@ -189,3 +142,7 @@ if __name__ == "__main__":
             print([round(x, 3) for x in metrics[metric]])
             print(f"Mean: {metrics[f'{metric}_mean']:.3f}")
             print(f"Std:  {metrics[f'{metric}_std']:.3f}")
+
+
+
+
