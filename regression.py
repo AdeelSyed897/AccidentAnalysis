@@ -8,67 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import KFold
 import numpy as np
-
-def process_weather(df):
-    weather = df["Weather_Condition"].fillna("Unknown").str.lower()
-
-    df["weather_rain"] = weather.str.contains(
-        "rain|drizzle|shower", regex=True
-    ).astype(int)
-
-    df["weather_snow"] = weather.str.contains(
-        "snow", regex=True
-    ).astype(int)
-
-    df["weather_fog"] = weather.str.contains(
-        "fog|mist", regex=True
-    ).astype(int)
-
-    df["weather_thunderstorm"] = weather.str.contains(
-        "thunder|t-storm", regex=True
-    ).astype(int)
-
-    df["weather_wind"] = weather.str.contains(
-        "windy", regex=True
-    ).astype(int)
-
-    df["weather_hail"] = weather.str.contains(
-        "hail", regex=True
-    ).astype(int)
-
-    df["weather_freezing"] = weather.str.contains(
-        "freezing|ice pellets|sleet|wintry mix", regex=True
-    ).astype(int)
-
-    df["weather_haze"] = weather.str.contains(
-        "haze|smoke|dust", regex=True
-    ).astype(int)
-
-    df["weather_clear"] = weather.str.contains(
-        "fair|clear", regex=True
-    ).astype(int)
-
-    return df
-
-def process_time(df):
-    df["Start_Time"] = pd.to_datetime(
-        df["Start_Time"],
-        format="mixed"
-    )
-    df["start_hour"] = df["Start_Time"].dt.hour
-    df["start_dayofweek"] = df["Start_Time"].dt.dayofweek
-    df["start_month"] = df["Start_Time"].dt.month
-    df["start_year"] = df["Start_Time"].dt.year
-
-    df["End_Time"] = pd.to_datetime(
-        df["End_Time"],
-        format="mixed"
-    )
-
-    df["duration_minutes"] = (
-        df["End_Time"] - pd.to_datetime(df["Start_Time"])
-    ).dt.total_seconds() / 60
-
+from preprocess import process_time, process_weather
 
 def create_models():
     """
