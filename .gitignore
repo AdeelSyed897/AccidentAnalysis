@@ -1,1 +1,7 @@
-.csv
+*.csv
+.env
+.venv/
+.*
+*.png
+
+decision_tree_rules.txt
