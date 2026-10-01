@@ -164,6 +164,7 @@ def process_time(df):
     for col in twilight_cols:
         if col in df.columns:
             df[col] = (df[col] == "Day").astype(int)
+    return df
 
 
 
