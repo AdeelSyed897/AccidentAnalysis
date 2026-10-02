@@ -5,3 +5,4 @@
 *.png
 
 decision_tree_rules.txt
+__pycache__/
